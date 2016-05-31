@@ -22,11 +22,14 @@ To deploy this charm simply run:
     juju deploy apache-zookeeper zookeeper
     juju add-unit -n 2 apache-zookeeper (optional but recommended for a quorum)
     juju deploy cs:~spicule/drillbit
+    juju expose drillbit
 
 (If you run this on LXD Local, check the issues below)
 
 Currently there isn't much in the way of actions and relations support,
 this will come shortly.
+
+There is a webconsole running on http://<serverip>:8047/
 
 ## MongoDB Connectivity
 
