@@ -1,64 +1,91 @@
 # Overview
 
-Describe the intended usage of this charm and anything unique about how this
-charm relates to others here.
+Query any non-relational datastore (well, almost...)
 
-This README will be displayed in the Charm Store, it should be either Markdown
-or RST. Ideal READMEs include instructions on how to use the charm, expected
-usage, and charm features that your audience might be interested in. For an
-example of a well written README check out Hadoop:
-http://jujucharms.com/charms/precise/hadoop
+Drill supports a variety of NoSQL databases and file systems,
+including HBase, MongoDB, MapR-DB, HDFS, MapR-FS, Amazon S3,
+Azure Blob Storage, Google Cloud Storage, Swift, NAS and local files.
+A single query can join data from multiple datastores. For example,
+you can join a user profile collection in MongoDB with a directory
+of event logs in Hadoop.
 
-Use this as a Markdown reference if you need help with the formatting of this
-README: http://askubuntu.com/editing-help
-
-This charm provides [service][]. Add a description here of what the service
-itself actually does.
-
-Also remember to check the [icon guidelines][] so that your charm looks good
-in the Juju GUI.
+Drill's datastore-aware optimizer automatically restructures a
+query plan to leverage the datastore's internal processing capabilities.
+In addition, Drill supports data locality, so it's a good idea to
+co-locate Drill and the datastore on the same nodes.
 
 # Usage
 
-Step by step instructions on using the charm:
+To deploy this charm simply run:
 
-juju deploy servicename
+    juju deploy cs:openjdk
+    juju deploy apache-zookeeper zookeeper
+    juju add-unit -n 2 apache-zookeeper (optional but recommended for a quorum)
+    juju deploy cs:~spicule/drillbit
 
-and so on. If you're providing a web service or something that the end user
-needs to go to, tell them here, especially if you're deploying a service that
-might listen to a non-default port.
+(If you run this on LXD Local, check the issues below)
 
-You can then browse to http://ip-address to configure the service.
+Currently there isn't much in the way of actions and relations support,
+this will come shortly.
+
+## MongoDB Connectivity
+
+If you are running a Juju hosted MongoDB charm, you can test the MongoDB
+SQL support, by running:
+
+    juju add-relation mongodb drillbit
+
+This will create a new storage entry on your drill cluster with connections
+to your MongoDB cluster.
+
+To query it you can either connect to drill via JDBC or
+
+    juju ssh drillbit/0
+    sudo -i
+    cd /opt/drill/bin
+    ./drill-conf
+    show databases
+
+You should see a connection called something like: juju_mongo_mongodb.<mongodbname>.
+
+Now you can do:
+
+    use juju_mongo_mongodb.Northwind;
+    show tables
+    select * from mytable;
 
 ## Scale out Usage
 
-If the charm has any recommendations for running at scale, outline them in
-examples here. For example if you have a memcached relation that improves
-performance, mention it here.
+You can simply add new units and they will be added to the cluster automatically:
+
+    juju add-unit -n 2 drillbit
 
 ## Known Limitations and Issues
 
-This not only helps users but gives people a place to start if they want to help
-you add features to your charm.
+If you run this on LXD Local there is a bug where its not setting the hostname
+of the LXD container and Drill fails to start. For now you need to edit /etc/hosts
+and add the hostname to the localhost line ensuring that
+
+    hostname -f
+
+resolves. Once that works:
+
+    cd /opt/drill/bin
+    ./drillbit start
 
 # Configuration
 
-The configuration options will be listed on the charm store, however If you're
-making assumptions or opinionated decisions in the charm (like setting a default
-administrator password), you should detail that here so the user knows how to
-change it immediately, etc.
+drill_url: Allows you to set an alternative download url for Apache Drill.
+
+cluster_id: Allows you to set an alternative cluster id for Zookeeper.
 
 # Contact Information
 
-Though this will be listed in the charm store itself don't assume a user will
-know that, so include that information here:
+## DrillBit
 
-## Upstream Project Name
-
-  - Upstream website
-  - Upstream bug tracker
-  - Upstream mailing list or contact information
-  - Feel free to add things if it's useful for users
+  - https://drill.apache.org
+  - https://github.com/buggtb/layer-drillbit
+  - Contact: tom@analytical-labs.com
 
 
 [service]: http://example.com
