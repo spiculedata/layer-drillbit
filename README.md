@@ -22,6 +22,8 @@ To deploy this charm simply run:
     juju deploy apache-zookeeper zookeeper
     juju add-unit -n 2 apache-zookeeper (optional but recommended for a quorum)
     juju deploy cs:~spicule/drillbit
+    juju add-relation drillbit zookeeper
+    juju add-relation drillbit openjdk
     juju expose drillbit
 
 (If you run this on LXD Local, check the issues below)
