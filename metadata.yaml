@@ -1,0 +1,9 @@
+name: drillbit
+summary: Apache Drill Drillbit
+maintainer: Tom Barber <tom@analytical-labs.com>
+description: Apache Drill Drillbit
+tags:
+  - big_data
+subordinate: false
+series:
+  - trusty

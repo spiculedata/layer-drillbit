@@ -1,0 +1,6 @@
+options:
+  drill_url:
+    type: string
+    default: "http://apache.mesi.com.ar/drill/drill-1.6.0/apache-drill-1.6.0.tar.gz"
+    description: "A short description of the configuration option"
+
