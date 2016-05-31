@@ -7,3 +7,10 @@ tags:
 subordinate: false
 series:
   - trusty
+provides:
+  java:
+    interface: java
+    scope: container
+requires:
+  zookeeper:
+    interface: zookeeper

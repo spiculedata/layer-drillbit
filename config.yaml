@@ -1,6 +1,9 @@
 options:
   drill_url:
     type: string
-    default: "http://apache.mesi.com.ar/drill/drill-1.6.0/apache-drill-1.6.0.tar.gz"
-    description: "A short description of the configuration option"
-
+    default: 'http://apache.mesi.com.ar/drill/drill-1.6.0/apache-drill-1.6.0.tar.gz#sha512=db0f8b35ad0934f05d704fdc7e08d4ab7ae06f9ce551f34a4e65e679f42ac6d2ca5d699e81ed550a3e773d09cd55d34f23d41148ad78ada27757c4a8f9b7e01e'
+    description: 'A short description of the configuration option'
+  cluster_id:
+    type: string
+    default: 'drill-cluster'
+    description: 'Cluster ID for zookeeper'
