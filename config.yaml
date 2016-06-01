@@ -7,3 +7,21 @@ options:
     type: string
     default: 'drill-cluster'
     description: 'Cluster ID for zookeeper'
+  drill_max_direct_memory:
+     type: string
+     default: '75%'
+     description: 'Drill Max Available RAM. By default we set this to 75% of total system ram. You can provide a percentage value or a Gigabyte value like: 8G'
+  drill_heap:
+      type: string
+      default: '25%'
+      description: 'Drill Max Heap Size. By default we set this to 25% of total system ram. You can provide a percentage value or a Gigabyte value like: 3G'
+  hdfs_path:
+      type: string
+      default: '/user/ubuntu'
+      description: 'Default path for HDFS connections.'
+  hdfs_writeable:
+      type: string
+      default: boolean
+      default: true
+      description: 'Is the HDFS path writable?'
+

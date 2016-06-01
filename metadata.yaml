@@ -16,3 +16,5 @@ requires:
     interface: zookeeper
   mongodb:
     interface: mongodb
+  hdfs:
+    interface: dfs
