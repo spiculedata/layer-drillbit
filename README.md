@@ -59,6 +59,14 @@ Now you can do:
     show tables
     select * from mytable;
 
+## HDFS connectivity
+
+If you are running a Hadoop setup, you can also test the HDFS connectivity.
+
+    juju add-relation drillbit namenode
+
+This will add a datasource entry for your Hadoop namenode. You can then query CSV/JSON/Parquet files.
+
 ## Scale out Usage
 
 You can simply add new units and they will be added to the cluster automatically:
@@ -86,12 +94,12 @@ cluster_id: Allows you to set an alternative cluster id for Zookeeper.
 
 # Contact Information
 
-## DrillBit
+## Apache Drill
 
   - https://drill.apache.org
   - https://github.com/buggtb/layer-drillbit
   - Contact: tom@analytical-labs.com
 
-
-[service]: http://example.com
-[icon guidelines]: https://jujucharms.com/docs/stable/authors-charm-icon
+## Charm Support
+  If you require commercial support for this charm or Apache Drill, please contact us and we'd be happy to help.
+  Email us at info@spicule.co.uk and we can arrange a call to discuss your requirements.
