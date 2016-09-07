@@ -7,7 +7,7 @@ from charmhelpers.core.host import adduser, chownr, mkdir
 from charmhelpers.core.hookenv import status_set, log, resource_get
 from charms.reactive.helpers import data_changed
 from psutil import virtual_memory
-
+import shutil
 
 @when_not('drillbit.installed')
 def install_drillbit():
@@ -17,10 +17,12 @@ def install_drillbit():
     """
     status_set('maintenance', 'Installing Apache Drill')
     drill = resource_get("software")
-    drill = resource_get("mysql-jar:")
-    drill = resource_get("pgsql-jar")
+    mysql = resource_get("mysql-jar:")
+    pgsql = resource_get("pgsql-jar")
     mkdir('/opt/drill/')
     check_call(['tar', 'xvfz', drill, '-C', '/opt/drill', '--strip-components=1'])
+    shutil.copy(mysql, "/opt/drill/jars/3rdparty/")
+    shutil.copy(pgsql, "/opt/drill/jars/3rdparty/")
     set_state('drillbit.installed')
     status_set('waiting', 'Apache Drill Installed, Awaiting Configuration')
 
@@ -188,13 +190,11 @@ def configure_mysql(mysql):
     """
     log("configuring mysql server"+ mysql.host())
     port2 = str(mysql.port())
-    t = {"name":"juju_mysql_"+mysql.database(), "config": {"type": "jdbc","driver": "com.mysql.jdbc.Driver", "url": "jdbc:mysql://"+mysql.host()+":"+port2+"/"+mysql.database(),"username": mysql.user(), "password":mysql.password(), "enabled": True}}
+    t = {"name":"juju_mysql_"+mysql.database(), "config": {"type": "jdbc","driver": "com.mysql.jdbc.Driver", "url": "jdbc:mysql://"+mysql.host()+":"+port2,"username": mysql.user(), "password":mysql.password(), "enabled": True}}
     params = json.dumps(t).encode('utf8')
     req = urllib.request.Request('http://localhost:8047/storage/juju_mysql_'+mysql.database()+'.json', data=params,headers={'content-type': 'application/json'})
     urllib.request.urlopen(req)
     set_state('drill.mysql.configured')
-
-
 
 @when('psql.database.available')
 @when_not('drill.psql.configured')
