@@ -1,6 +1,6 @@
 import json
 import urllib.request
-from charms.reactive import when, when_not, set_state
+from charms.reactive import when, when_not, set_state, remove_state
 from subprocess import check_call, CalledProcessError, call, check_output, Popen
 from charmhelpers.core import hookenv
 from charmhelpers.core.host import adduser, chownr, mkdir
@@ -117,13 +117,16 @@ def start_drill():
         log("Starting Drill.........")
         check_call('./drillbit.sh start', cwd="/opt/drill/bin/", shell=True)
         status_set('active', 'Apache Drill up and running.')
+        set_state('drillbit.running')
 
 def restart_drill():
     """
          Run the drill stop script.
     """
+    remove_state('drillbit.running')
     check_call('./drillbit.sh restart', cwd="/opt/drill/bin/", shell=True)
     status_set('active', 'Apache Drill up and running.')
+    set_state('drillbit.running')
 
 def stop_drill():
     """
@@ -131,7 +134,9 @@ def stop_drill():
     """
     check_call('./drillbit.sh stop', cwd="/opt/drill/bin/", shell=True)
     status_set('active', 'Apache Drill Stopped.')
+    remove_state('drillbit.running')
 
+@when('drillbit.running')
 @when('mongodb.database.available')
 def configure_mongodb(mongo):
     """
@@ -148,6 +153,7 @@ def configure_mongodb(mongo):
     req = urllib.request.Request('http://localhost:8047/storage/juju_mongo_'+n+'.json', data=params,headers={'content-type': 'application/json'})
     urllib.request.urlopen(req)
 
+@when('drillbit.running')
 @when('hdfs.joined')
 @when_not('drill.hdfs.configured')
 def configure_hdfs(client):
@@ -182,6 +188,7 @@ def configure_hdfs(client):
     urllib.request.urlopen(req)
     set_state('drill.hdfs.configured')
 
+@when('drillbit.running')
 @when('mysql.available')
 @when_not('drill.mysql.configured')
 def configure_mysql(mysql):
@@ -190,12 +197,13 @@ def configure_mysql(mysql):
     """
     log("configuring mysql server"+ mysql.host())
     port2 = str(mysql.port())
-    t = {"name":"juju_mysql_"+mysql.database(), "config": {"type": "jdbc","driver": "com.mysql.jdbc.Driver", "url": "jdbc:mysql://"+mysql.host()+":"+port2,"username": mysql.user(), "password":mysql.password(), "enabled": True}}
+    t = {"name":"juju_mysql_"+mysql.host(), "config": {"type": "jdbc","driver": "com.mysql.jdbc.Driver", "url": "jdbc:mysql://"+mysql.host()+":"+port2,"username": mysql.user(), "password":mysql.password(), "enabled": True}}
     params = json.dumps(t).encode('utf8')
     req = urllib.request.Request('http://localhost:8047/storage/juju_mysql_'+mysql.database()+'.json', data=params,headers={'content-type': 'application/json'})
     urllib.request.urlopen(req)
     set_state('drill.mysql.configured')
 
+@when('drillbit.running')
 @when('pgsql.master.available')
 @when_not('drill.psql.configured')
 def configure_pgsql(psql):
@@ -204,12 +212,13 @@ def configure_pgsql(psql):
     """
     n=0
     log("configuring psql server"+ psql.master.host+psql.master.port)
-    t = {"name":"juju_psql_"+n, "config": {"type": "jdbc","driver": "org.postgresql.Driver", "url": "jdbc:postgresql://"+psql.master.host+":"+psql.master.port,"username": psql.master.user, "password":psql.master.password, "enabled": True}}
+    t = {"name":"juju_psql_"+psql.master.host, "config": {"type": "jdbc","driver": "org.postgresql.Driver", "url": "jdbc:postgresql://"+psql.master.host+":"+str(psql.master.port),"username": psql.master.user, "password":psql.master.password, "enabled": True}}
     params = json.dumps(t).encode('utf8')
     req = urllib.request.Request('http://localhost:8047/storage/juju_psql_'+n+'.json', data=params,headers={'content-type': 'application/json'})
     urllib.request.urlopen(req)
     set_state('drill.psql.configured')
 
+@when('drillbit.running')
 @when('hbase.ready')
 @when_not('drill.hbase.configured')
 def configure(hbase):
