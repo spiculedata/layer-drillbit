@@ -203,6 +203,7 @@ def configure_mysql(psql):
         Configure Postgres when a relation is added.
     """
     n=0
+    log("configuring psql server"+ psql.host())
     t = {"name":"juju_psql_"+n, "config": {"type": "jdbc","driver": "org.postgresql.Driver", "url": "jdbc:postgresql://"+psql.host()+":"+psql.port()+"/"+psql.database(),"username": psql.user, "password":psql.password, "enabled": True}}
     params = json.dumps(t).encode('utf8')
     req = urllib.request.Request('http://localhost:8047/storage/juju_psql_'+n+'.json', data=params,headers={'content-type': 'application/json'})
