@@ -17,6 +17,8 @@ def install_drillbit():
     """
     status_set('maintenance', 'Installing Apache Drill')
     drill = resource_get("software")
+    drill = resource_get("mysql-jar:")
+    drill = resource_get("pgsql-jar")
     mkdir('/opt/drill/')
     check_call(['tar', 'xvfz', drill, '-C', '/opt/drill', '--strip-components=1'])
     set_state('drillbit.installed')
@@ -184,12 +186,14 @@ def configure_mysql(mysql):
     """
         Configure MySQL when a relation is added.
     """
-    n=0
-    t = {"name":"juju_mysql_"+n, "config": {"type": "jdbc","driver": "com.mysql.jdbc.Driver", "url": "jdbc:mysql://"+mysql.host()+":"+mysql.port()+"/"+mysql.database,"username": mysql.user, "password":mysql.password, "enabled": True}}
+    log("configuring mysql server"+ mysql.host())
+    port2 = str(mysql.port())
+    t = {"name":"juju_mysql_"+mysql.database(), "config": {"type": "jdbc","driver": "com.mysql.jdbc.Driver", "url": "jdbc:mysql://"+mysql.host()+":"+port2+"/"+mysql.database(),"username": mysql.user(), "password":mysql.password(), "enabled": True}}
     params = json.dumps(t).encode('utf8')
-    req = urllib.request.Request('http://localhost:8047/storage/juju_mysql_'+n+'.json', data=params,headers={'content-type': 'application/json'})
+    req = urllib.request.Request('http://localhost:8047/storage/juju_mysql_'+mysql.database()+'.json', data=params,headers={'content-type': 'application/json'})
     urllib.request.urlopen(req)
     set_state('drill.mysql.configured')
+
 
 
 @when('psql.database.available')
