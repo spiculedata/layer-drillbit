@@ -184,14 +184,13 @@ def configure_mysql(mysql):
     """
         Configure MySQL when a relation is added.
     """
-    log("configuring mysql" +mysql.connection_string())
-    n=0
-    t = {"name":"juju_mysql_"+n, "config": {"type": "jdbc","driver": "com.mysql.jdbc.Driver", "url": "jdbc:mysql://"+mysql.host()+":"+mysql.port()+"/"+mysql.database,"username": mysql.user, "password":mysql.password, "enabled": True}}
+    log("configuring mysql server"+ mysql.host())
+    port2 = str(mysql.port())
+    t = {"name":"juju_mysql_"+mysql.database(), "config": {"type": "jdbc","driver": "com.mysql.jdbc.Driver", "url": "jdbc:mysql://"+mysql.host()+":"+port2,"username": mysql.user(), "password":mysql.password(), "enabled": True}}
     params = json.dumps(t).encode('utf8')
-    req = urllib.request.Request('http://localhost:8047/storage/juju_mysql_'+n+'.json', data=params,headers={'content-type': 'application/json'})
+    req = urllib.request.Request('http://localhost:8047/storage/juju_mysql_'+mysql.database()+'.json', data=params,headers={'content-type': 'application/json'})
     urllib.request.urlopen(req)
-    #set_state('drill.mysql.configured')
-
+    set_state('drill.mysql.configured')
 
 @when('psql.database.available')
 @when_not('drill.psql.configured')
