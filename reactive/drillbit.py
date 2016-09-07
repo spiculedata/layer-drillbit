@@ -212,7 +212,7 @@ def configure_pgsql(psql):
     """
     n=0
     log("configuring psql server"+ psql.master.host+psql.master.port)
-    t = {"name":"juju_psql_"+psql.master.host, "config": {"type": "jdbc","driver": "org.postgresql.Driver", "url": "jdbc:postgresql://"+psql.master.host+":"+str(psql.master.port),"username": psql.master.user, "password":psql.master.password, "enabled": True}}
+    t = {"name":"juju_psql_"+psql.master.host, "config": {"type": "jdbc","driver": "org.postgresql.Driver", "url": "jdbc:postgresql://"+psql.master.host+":"+str(psql.master.port)+"/"+psql.master.dbname,"username": psql.master.user, "password":psql.master.password, "enabled": True}}
     params = json.dumps(t).encode('utf8')
     req = urllib.request.Request('http://localhost:8047/storage/juju_psql_'+psql.master.host+'.json', data=params,headers={'content-type': 'application/json'})
     urllib.request.urlopen(req)
