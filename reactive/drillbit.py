@@ -17,7 +17,7 @@ def install_drillbit():
     """
     status_set('maintenance', 'Installing Apache Drill')
     drill = resource_get("software")
-    mysql = resource_get("mysql-jar:")
+    mysql = resource_get("mysql-jar")
     pgsql = resource_get("pgsql-jar")
     mkdir('/opt/drill/')
     check_call(['tar', 'xvfz', drill, '-C', '/opt/drill', '--strip-components=1'])
@@ -196,15 +196,15 @@ def configure_mysql(mysql):
     urllib.request.urlopen(req)
     set_state('drill.mysql.configured')
 
-@when('psql.database.available')
+@when('pgsql.database.available')
 @when_not('drill.psql.configured')
-def configure_mysql(psql):
+def configure_pgsql(psql):
     """
         Configure Postgres when a relation is added.
     """
     n=0
-    log("configuring psql server"+ psql.host()+psql.port())
-    t = {"name":"juju_psql_"+n, "config": {"type": "jdbc","driver": "org.postgresql.Driver", "url": "jdbc:postgresql://"+psql.host()+":"+psql.port(),"username": psql.user(), "password":psql.password(), "enabled": True}}
+    log("configuring psql server"+ psql.host+psql.port)
+    t = {"name":"juju_psql_"+n, "config": {"type": "jdbc","driver": "org.postgresql.Driver", "url": "jdbc:postgresql://"+psql.host+":"+psql.port,"username": psql.user, "password":psql.password, "enabled": True}}
     params = json.dumps(t).encode('utf8')
     req = urllib.request.Request('http://localhost:8047/storage/juju_psql_'+n+'.json', data=params,headers={'content-type': 'application/json'})
     urllib.request.urlopen(req)
