@@ -7,6 +7,7 @@ tags:
 subordinate: false
 series:
   - trusty
+  - xenial
 provides:
   java:
     interface: java
@@ -18,3 +19,14 @@ requires:
     interface: mongodb
   hdfs:
     interface: dfs
+  mysql:
+    interface: mysql
+  pgsql:
+    interface: pgsql
+  hbase:
+    interface: hbase
+resources:
+   software:
+      type: file
+      filename: drill.tar.gz
+      description: "The Apache Drill TarBall"

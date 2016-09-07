@@ -2,10 +2,9 @@ import json
 import urllib.request
 from charms.reactive import when, when_not, set_state
 from subprocess import check_call, CalledProcessError, call, check_output, Popen
-from charmhelpers.fetch.archiveurl import ArchiveUrlFetchHandler
 from charmhelpers.core import hookenv
 from charmhelpers.core.host import adduser, chownr, mkdir
-from charmhelpers.core.hookenv import status_set, log
+from charmhelpers.core.hookenv import status_set, log, resource_get
 from charms.reactive.helpers import data_changed
 from psutil import virtual_memory
 
@@ -17,10 +16,9 @@ def install_drillbit():
          This will download Apache Drill from the configuration url and extract it into /opt/drill/
     """
     status_set('maintenance', 'Installing Apache Drill')
-    au = ArchiveUrlFetchHandler()
-    au.download(hookenv.config()['drill_url'], '/opt/drill.tar.gz')
+    drill = resource_get("software")
     mkdir('/opt/drill/')
-    check_call(['tar', 'xvfz', '/opt/drill.tar.gz', '-C', '/opt/drill', '--strip-components=1'])
+    check_call(['tar', 'xvfz', drill, '-C', '/opt/drill', '--strip-components=1'])
     set_state('drillbit.installed')
     status_set('waiting', 'Apache Drill Installed, Awaiting Configuration')
 
@@ -172,53 +170,7 @@ def configure_hdfs(client):
             },
         },
         "formats": {
-            "psv": {
-                "type": "text",
-                "extensions": [
-                    "tbl"
-                ],
-                "delimiter": "|"
-            },
-            "csv": {
-                "type": "text",
-                "extensions": [
-                    "csv"
-                ],
-                "delimiter": ","
-            },
-            "tsv": {
-                "type": "text",
-                "extensions": [
-                    "tsv"
-                ],
-                "delimiter": "\t"
-            },
-            "parquet": {
-                "type": "parquet"
-            },
-            "json": {
-                "type": "json",
-                "extensions": [
-                    "json"
-                ]
-            },
-            "avro": {
-                "type": "avro"
-            },
-            "sequencefile": {
-                "type": "sequencefile",
-                "extensions": [
-                    "seq"
-                ]
-            },
-            "csvh": {
-                "type": "text",
-                "extensions": [
-                    "csvh"
-                ],
-                "extractHeader": True,
-                "delimiter": ","
-            }
+            hookenv.config()['hdfs_formats']
         }
     }}
     params = json.dumps(t).encode('utf8')
@@ -226,6 +178,47 @@ def configure_hdfs(client):
     urllib.request.urlopen(req)
     set_state('drill.hdfs.configured')
 
+@when('mysql.available')
+@when_not('drill.mysql.configured')
+def configure_mysql(mysql):
+    """
+        Configure MySQL when a relation is added.
+    """
+    n=0
+    t = {"name":"juju_mysql_"+n, "config": {"type": "jdbc","driver": "com.mysql.jdbc.Driver", "url": "jdbc:mysql://"+mysql.host()+":"+mysql.port()+"/"+mysql.database,"username": mysql.user, "password":mysql.password, "enabled": True}}
+    params = json.dumps(t).encode('utf8')
+    req = urllib.request.Request('http://localhost:8047/storage/juju_mysql_'+n+'.json', data=params,headers={'content-type': 'application/json'})
+    urllib.request.urlopen(req)
+    set_state('drill.mysql.configured')
+
+
+@when('psql.database.available')
+@when_not('drill.psql.configured')
+def configure_mysql(psql):
+    """
+        Configure Postgres when a relation is added.
+    """
+    n=0
+    t = {"name":"juju_psql_"+n, "config": {"type": "jdbc","driver": "org.postgresql.Driver", "url": "jdbc:postgresql://"+psql.host()+":"+psql.port()+"/"+psql.database(),"username": psql.user, "password":psql.password, "enabled": True}}
+    params = json.dumps(t).encode('utf8')
+    req = urllib.request.Request('http://localhost:8047/storage/juju_psql_'+n+'.json', data=params,headers={'content-type': 'application/json'})
+    urllib.request.urlopen(req)
+    set_state('drill.psql.configured')
+
+@when('hbase.ready')
+@when_not('drill.hbase.configured')
+def configure(hbase):
+    n = ''
+    p = ''
+    for unit in hbase.servers():
+        n += unit['host']+","
+        p = unit['master_port']
+
+    t = {"name":"juju_hbase_"+n, "config": {"type": "hbase", "size.calculator.enabled": False, "config": { "hbase.zookeeper.quorum": n, "hbase.zookeeper.property.clientport": p}, "enabled": True}}
+    params = json.dumps(t).encode('utf8')
+    req = urllib.request.Request('http://localhost:8047/storage/juju_hbase_'+n+'.json', data=params,headers={'content-type': 'application/json'})
+    urllib.request.urlopen(req)
+    set_state('drill.hbase.configured')
 
 def configure_direct_memory():
     """
@@ -233,7 +226,7 @@ def configure_direct_memory():
     """
     if '%' in hookenv.config()['drill_max_direct_memory']:
         direct = calculate_ram(hookenv.config()['drill_max_direct_memory'][:-1])
-        if direct<2 :
+        if direct < 2:
             direct = str(2)+'G'
         else:
             direct = str(direct)+'G'
@@ -241,7 +234,7 @@ def configure_direct_memory():
     elif '%' not in hookenv.config()['drill_max_direct_memory'] and 'G' not in hookenv.config()['drill_max_direct_memory']:
         direct = hookenv.config()['drill_max_direct_memory']+'G'
         return direct
-    else
+    else:
         return hookenv.config()['drill_max_direct_memory']
 
 def configure_heap():
@@ -258,7 +251,7 @@ def configure_heap():
     elif '%' not in hookenv.config()['drill_heap'] and 'G' not in hookenv.config()['drill_heap']:
         heap = hookenv.config()['drill_heap']+'G'
         return heap
-    else
+    else:
         return hookenv.config()['drill_heap']
 
 def write_memory_file(direct, heap):

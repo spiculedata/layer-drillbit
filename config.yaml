@@ -1,8 +1,4 @@
 options:
-  drill_url:
-    type: string
-    default: 'http://apache.mesi.com.ar/drill/drill-1.8.0/apache-drill-1.8.0.tar.gz'
-    description: 'The default download location for Apache Drill.'
   cluster_id:
     type: string
     default: 'drill-cluster'
@@ -23,3 +19,52 @@ options:
       type: boolean
       default: True
       description: 'Is the HDFS path writable?'
+  hdfs_formats:
+      type: string
+      default:'            "psv": {
+                              "type": "text",
+                              "extensions": [
+                                  "tbl"
+                              ],
+                              "delimiter": "|"
+                          },
+                          "csv": {
+                              "type": "text",
+                              "extensions": [
+                                  "csv"
+                              ],
+                              "delimiter": ","
+                          },
+                          "tsv": {
+                              "type": "text",
+                              "extensions": [
+                                  "tsv"
+                              ],
+                              "delimiter": "\t"
+                          },
+                          "parquet": {
+                              "type": "parquet"
+                          },
+                          "json": {
+                              "type": "json",
+                              "extensions": [
+                                  "json"
+                              ]
+                          },
+                          "avro": {
+                              "type": "avro"
+                          },
+                          "sequencefile": {
+                              "type": "sequencefile",
+                              "extensions": [
+                                  "seq"
+                              ]
+                          },
+                          "csvh": {
+                              "type": "text",
+                              "extensions": [
+                                  "csvh"
+                              ],
+                              "extractHeader": True,
+                              "delimiter": ","
+                          }'
