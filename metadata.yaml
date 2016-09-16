@@ -12,6 +12,8 @@ provides:
   java:
     interface: java
     scope: container
+  jdbc:
+    interface: jdbc
 requires:
   zookeeper:
     interface: zookeeper
@@ -30,11 +32,11 @@ resources:
       type: file
       filename: drill.tar.gz
       description: "The Apache Drill TarBall"
-    mysql-jar:
+   mysql-jar:
        type: file
        filename: mysql-connector.jar
        description: "The MySQL connector jar"
-    pgsql-jar:
+   pgsql-jar:
         type: file
         filename: psql-connector.jar
         description: "The Postgres JDBC Driver"

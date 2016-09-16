@@ -289,3 +289,22 @@ def write_zk_file(zookeeper):
     text_file = open("/opt/drill/conf/drill-override.conf", "w")
     text_file.write(t)
     text_file.close()
+
+@when('zookeeper.ready')
+@when('jdbc.connection.requested')
+def provide_connection(zookeeper, jdbc):
+      log(jdbc)
+      zklist = ''
+      for zk_unit in jdbc.zookeepers():
+        zklist += add_zookeeper(zk_unit['host'], zk_unit['port'])
+      zklist = zklist[:-1]
+      zoos = ",".join(zklist)
+      url = "jdbc:drill:zk="+zoos
+      zookeeper.provide_connection(
+          service="drillservice",
+          url=url,
+          user=None,
+          password=None,
+          driver="org.apache.drill.jdbc.Driver",
+          extended=None
+      )
