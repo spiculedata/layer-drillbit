@@ -1,4 +1,4 @@
-name: drillbit
+name: apache-drill
 summary: Apache Drill Drillbit
 maintainer: Tom Barber <tom@analytical-labs.com>
 description: Apache Drill Drillbit
@@ -28,10 +28,6 @@ requires:
   hbase:
     interface: hbase
 resources:
-   software:
-      type: file
-      filename: drill.tar.gz
-      description: "The Apache Drill TarBall"
    mysql-jar:
        type: file
        filename: mysql-connector.jar

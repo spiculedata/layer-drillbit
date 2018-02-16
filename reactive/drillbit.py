@@ -8,6 +8,8 @@ from charmhelpers.core.hookenv import status_set, log, resource_get
 from charms.reactive.helpers import data_changed
 from psutil import virtual_memory
 import shutil
+from charms.layer import snap
+import os
 
 @when_not('drillbit.installed')
 def install_drillbit():
@@ -16,15 +18,16 @@ def install_drillbit():
          This will download Apache Drill from the configuration url and extract it into /opt/drill/
     """
     status_set('maintenance', 'Installing Apache Drill')
-    drill = resource_get("software")
+    snap.install('apache-drill-spicule', channel="edge", devmode=True)
+    hookenv.open_port(8047)
     mysql = resource_get("mysql-jar")
     pgsql = resource_get("pgsql-jar")
-    mkdir('/opt/drill/')
-    check_call(['tar', 'xvfz', drill, '-C', '/opt/drill', '--strip-components=1'])
-    shutil.copy(mysql, "/opt/drill/jars/3rdparty/")
-    shutil.copy(pgsql, "/opt/drill/jars/3rdparty/")
+    mkdir('/var/snap/apache-drill/common/jars/3rdparty/')
+    shutil.copy(mysql, "/var/snap/apache-drill/common/jars/3rdparty/")
+    shutil.copy(pgsql, "/var/snap/apache-drill/common/jars/3rdparty/")
     set_state('drillbit.installed')
     status_set('waiting', 'Apache Drill Installed, Awaiting Configuration')
+
 
 @when('zookeeper.joined')
 @when_not('zookeeper.ready')
@@ -41,17 +44,10 @@ def wait_for_zkjoin():
     """
     status_set('waiting', 'Waiting for Zookeeper to become joined')
 
-@when_not('java.ready')
-def wait_for_java():
-    """
-        Wait for Java
-    """
-    status_set('waiting', 'Waiting for Java')
 
 @when('zookeeper.ready')
 @when_not('drillbit.configured')
-@when('java.ready')
-def configure(java, zookeeper):
+def configure(zookeeper):
     """
         Configure Zookeeper for the first time.
         This will set memory limits. By default we use a % model for memory calculations.
@@ -67,8 +63,8 @@ def configure(java, zookeeper):
     set_state('drillbit.configured')
     status_set('active', 'Apache Drill up and running')
 
-@when('drillbit.configured', 'zookeeper.ready', 'java.ready')
-def configure_zookeepers(zookeeper, java):
+@when('drillbit.configured', 'zookeeper.ready')
+def configure_zookeepers(zookeeper):
     """
         Once ZK has been related and java is available we endlessly
         run this hook to keep the ZK config up to date and RAM settings correct.
@@ -112,10 +108,10 @@ def start_drill():
     """
     try:
         log("Checking drill status")
-        check_call('./drillbit.sh status', cwd="/opt/drill/bin/", shell=True)
+        check_call('apache-drill-spicule.status-drill-distributed', shell=True)
     except CalledProcessError:
         log("Starting Drill.........")
-        check_call('./drillbit.sh start', cwd="/opt/drill/bin/", shell=True)
+        check_call('apache-drill-spicule.start-drill-distributed', shell=True)
         status_set('active', 'Apache Drill up and running.')
         set_state('drillbit.running')
 
@@ -124,7 +120,8 @@ def restart_drill():
          Run the drill stop script.
     """
     remove_state('drillbit.running')
-    check_call('./drillbit.sh restart', cwd="/opt/drill/bin/", shell=True)
+    check_call('apache-drill-spicule.stop-drill-distributed', shell=True)
+    check_call('apache-drill-spicule.start-drill-distributed', shell=True)
     status_set('active', 'Apache Drill up and running.')
     set_state('drillbit.running')
 
@@ -132,7 +129,7 @@ def stop_drill():
     """
         Stop drill.
     """
-    check_call('./drillbit.sh stop', cwd="/opt/drill/bin/", shell=True)
+    check_call('apache-drill-spicule.stop-drill-distributed', shell=True)
     status_set('active', 'Apache Drill Stopped.')
     remove_state('drillbit.running')
 
@@ -179,9 +176,7 @@ def configure_hdfs(client):
                 "defaultInputFormat": None
             },
         },
-        "formats": {
-            hookenv.config()['hdfs_formats']
-        }
+        "formats": hookenv.config()['hdfs_formats']
     }}
     params = json.dumps(t).encode('utf8')
     req = urllib.request.Request('http://localhost:8047/storage/juju_hdfs_'+n+'.json', data=params,headers={'content-type': 'application/json'})
@@ -273,7 +268,7 @@ def write_memory_file(direct, heap):
          Write the RAM variables to disk.
     """
     t2 = 'DRILL_MAX_DIRECT_MEMORY="'+direct+'"\nDRILL_HEAP="'+heap+'"\nexport DRILL_JAVA_OPTS="-Xms$DRILL_HEAP -Xmx$DRILL_HEAP -XX:MaxDirectMemorySize=$DRILL_MAX_DIRECT_MEMORY -XX:MaxPermSize=512M -XX:ReservedCodeCacheSize=1G -Ddrill.exec.enable-epoll=true"\nexport SERVER_GC_OPTS="-XX:+CMSClassUnloadingEnabled -XX:+UseG1GC "'
-    text_file = open("/opt/drill/conf/drill-env.sh", "w")
+    text_file = open("/var/snap/apache-drill-spicule/current/drill/conf/drill-env.sh", "w+")
     text_file.write(t2)
     text_file.close()
 
@@ -286,7 +281,9 @@ def write_zk_file(zookeeper):
         zklist += add_zookeeper(zk_unit['host'], zk_unit['port'])
     zklist = zklist[:-1]
     t = simple_template(zklist)
-    text_file = open("/opt/drill/conf/drill-override.conf", "w")
+    if not os.path.exists("/var/snap/apache-drill-spicule/current/drill/conf"):
+        os.makedirs("/var/snap/apache-drill-spicule/current/drill/conf")
+    text_file = open("/var/snap/apache-drill-spicule/current/drill/conf/drill-override.conf", "w+")
     text_file.write(t)
     text_file.close()
 
