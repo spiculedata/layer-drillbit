@@ -1,10 +1,29 @@
 import json
-import urllib.request
-from charms.reactive import when, when_not, set_state, remove_state
-from subprocess import check_call, CalledProcessError, call, check_output, Popen
+import urllib.request as request
+from charms.reactive import (
+    when,
+    when_not,
+    set_state,
+    remove_state
+)
+from subprocess import (
+    check_call,
+    CalledProcessError,
+    call,
+    check_output,
+    Popen
+)
 from charmhelpers.core import hookenv
-from charmhelpers.core.host import adduser, chownr, mkdir
-from charmhelpers.core.hookenv import status_set, log, resource_get
+from charmhelpers.core.host import (
+    adduser,
+    chownr,
+    mkdir
+)
+from charmhelpers.core.hookenv import (
+    status_set,
+    log,
+    resource_get
+)
 from charms.reactive.helpers import data_changed
 from psutil import virtual_memory
 import shutil
@@ -147,8 +166,8 @@ def configure_mongodb(mongo):
         n = n.split('/', 1)[0]
     t = {"name":"juju_mongo_"+n, "config": {"type": "mongo","connection": "mongodb://"+mongo.connection_string()+"/","enabled": True}}
     params = json.dumps(t).encode('utf8')
-    req = urllib.request.Request('http://localhost:8047/storage/juju_mongo_'+n+'.json', data=params,headers={'content-type': 'application/json'})
-    urllib.request.urlopen(req)
+    req = request.Request('http://localhost:8047/storage/juju_mongo_'+n+'.json', data=params,headers={'content-type': 'application/json'})
+    request.urlopen(req)
 
 @when('drillbit.running')
 @when('hdfs.joined')
@@ -179,8 +198,8 @@ def configure_hdfs(client):
         "formats": hookenv.config()['hdfs_formats']
     }}
     params = json.dumps(t).encode('utf8')
-    req = urllib.request.Request('http://localhost:8047/storage/juju_hdfs_'+n+'.json', data=params,headers={'content-type': 'application/json'})
-    urllib.request.urlopen(req)
+    req = request.Request('http://localhost:8047/storage/juju_hdfs_'+n+'.json', data=params,headers={'content-type': 'application/json'})
+    request.urlopen(req)
     set_state('drill.hdfs.configured')
 
 @when('drillbit.running')
@@ -194,8 +213,8 @@ def configure_mysql(mysql):
     port2 = str(mysql.port())
     t = {"name":"juju_mysql_"+mysql.host(), "config": {"type": "jdbc","driver": "com.mysql.jdbc.Driver", "url": "jdbc:mysql://"+mysql.host()+":"+port2,"username": mysql.user(), "password":mysql.password(), "enabled": True}}
     params = json.dumps(t).encode('utf8')
-    req = urllib.request.Request('http://localhost:8047/storage/juju_mysql_'+mysql.database()+'.json', data=params,headers={'content-type': 'application/json'})
-    urllib.request.urlopen(req)
+    req = request.Request('http://localhost:8047/storage/juju_mysql_'+mysql.database()+'.json', data=params,headers={'content-type': 'application/json'})
+    request.urlopen(req)
     set_state('drill.mysql.configured')
 
 @when('drillbit.running')
@@ -209,8 +228,8 @@ def configure_pgsql(psql):
     log("configuring psql server"+ psql.master.host+psql.master.port)
     t = {"name":"juju_psql_"+psql.master.host, "config": {"type": "jdbc","driver": "org.postgresql.Driver", "url": "jdbc:postgresql://"+psql.master.host+":"+str(psql.master.port)+"/"+psql.master.dbname,"username": psql.master.user, "password":psql.master.password, "enabled": True}}
     params = json.dumps(t).encode('utf8')
-    req = urllib.request.Request('http://localhost:8047/storage/juju_psql_'+psql.master.host+'.json', data=params,headers={'content-type': 'application/json'})
-    urllib.request.urlopen(req)
+    req = request.Request('http://localhost:8047/storage/juju_psql_'+psql.master.host+'.json', data=params,headers={'content-type': 'application/json'})
+    request.urlopen(req)
     set_state('drill.psql.configured')
 
 @when('drillbit.running')
@@ -225,8 +244,8 @@ def configure(hbase):
 
     t = {"name":"juju_hbase_"+n, "config": {"type": "hbase", "size.calculator.enabled": False, "config": { "hbase.zookeeper.quorum": n, "hbase.zookeeper.property.clientport": p}, "enabled": True}}
     params = json.dumps(t).encode('utf8')
-    req = urllib.request.Request('http://localhost:8047/storage/juju_hbase_'+n+'.json', data=params,headers={'content-type': 'application/json'})
-    urllib.request.urlopen(req)
+    req = request.Request('http://localhost:8047/storage/juju_hbase_'+n+'.json', data=params,headers={'content-type': 'application/json'})
+    request.urlopen(req)
     set_state('drill.hbase.configured')
 
 def configure_direct_memory():
