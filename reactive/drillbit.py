@@ -29,6 +29,7 @@ from psutil import virtual_memory
 import shutil
 from charms.layer import snap
 import os
+import charmhelpers
 
 @when_not('drillbit.installed')
 def install_drillbit():
@@ -309,15 +310,16 @@ def write_zk_file(zookeeper):
 @when('zookeeper.ready')
 @when('jdbc.connection.requested')
 def provide_connection(zookeeper, jdbc):
-      log(jdbc)
       zklist = ''
       for zk_unit in jdbc.zookeepers():
-        zklist += add_zookeeper(zk_unit['host'], zk_unit['port'])
-      zklist = zklist[:-1]
+        zklist.append(add_zookeeper(zk_unit['host'], zk_unit['port']))
       zoos = ",".join(zklist)
-      url = "jdbc:drill:zk="+zoos
+      url = "jdbc:drill:zk="+zoos+'/drill/drill-cluster'
+      url = url[:-1]
+      sn = charmhelpers.core.hookenv.service_name()
       zookeeper.provide_connection(
-          service="drillservice",
+          service=sn,
+          host=sn,
           url=url,
           user=None,
           password=None,
