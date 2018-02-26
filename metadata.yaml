@@ -6,7 +6,6 @@ tags:
   - big_data
 subordinate: false
 series:
-  - trusty
   - xenial
 provides:
   java:

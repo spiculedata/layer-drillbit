@@ -1,3 +1,4 @@
+import yaml
 import json
 import urllib.request as request
 from charms.reactive import (
@@ -30,6 +31,7 @@ import shutil
 from charms.layer import snap
 import os
 import charmhelpers
+from time import sleep
 
 @when_not('drillbit.installed')
 def install_drillbit():
@@ -142,9 +144,23 @@ def restart_drill():
     remove_state('drillbit.running')
     check_call('apache-drill-spicule.stop-drill-distributed', shell=True)
     check_call('apache-drill-spicule.start-drill-distributed', shell=True)
+    check_responsive(10)
     status_set('active', 'Apache Drill up and running.')
     set_state('drillbit.running')
 
+def check_responsive(lc):
+    
+    for _ in range(lc):
+        try:        
+            req = request.Request('http://localhost:8047')
+            resp = request.urlopen(req)
+            break
+        except Exception:
+            sleep(5)
+            log("ping failed, retrying")
+    else:
+        raise
+    
 def stop_drill():
     """
         Stop drill.
@@ -185,6 +201,10 @@ def configure_hdfs(client):
         n = n.split('/', 1)[0]
     nn = list(client.hosts_map().keys())[list(client.hosts_map().values()).index('namenode-0')]
     port = str(client.port())
+    str1 = hookenv.config()['hdfs_formats'][1:-2]
+    print(str1)
+    fmt = yaml.load(str1)
+    log(fmt)
     t = {"name":"juju_hdfs_"+n, "config": {
         "type": "file",
         "enabled": True,
@@ -196,7 +216,7 @@ def configure_hdfs(client):
                 "defaultInputFormat": None
             },
         },
-        "formats": hookenv.config()['hdfs_formats']
+        "formats": fmt
     }}
     params = json.dumps(t).encode('utf8')
     req = request.Request('http://localhost:8047/storage/juju_hdfs_'+n+'.json', data=params,headers={'content-type': 'application/json'})
@@ -310,12 +330,13 @@ def write_zk_file(zookeeper):
 @when('zookeeper.ready')
 @when('jdbc.connection.requested')
 def provide_connection(zookeeper, jdbc):
-      zklist = ''
+      zklist = []
       for zk_unit in jdbc.zookeepers():
         zklist.append(add_zookeeper(zk_unit['host'], zk_unit['port']))
       zoos = ",".join(zklist)
-      url = "jdbc:drill:zk="+zoos+'/drill/drill-cluster'
+      url = "jdbc:drill:zk="+zoos
       url = url[:-1]
+      url = url+'/drill/drill-cluster'
       sn = charmhelpers.core.hookenv.service_name()
       zookeeper.provide_connection(
           service=sn,
