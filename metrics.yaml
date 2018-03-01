@@ -1,0 +1,7 @@
+metrics:
+  ram:
+    type: gauge
+    description: Available RAM
+    command: scripts/memfetcher.py
+plan:
+ required: true
