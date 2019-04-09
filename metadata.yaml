@@ -13,6 +13,8 @@ provides:
     scope: container
   jdbc:
     interface: jdbc
+  website:
+    interface: http
 requires:
   zookeeper:
     interface: zookeeper

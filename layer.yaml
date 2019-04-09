@@ -1,1 +1,1 @@
-includes: ['layer:basic', 'layer:snap', 'interface:zookeeper','interface:java', 'interface:mongodb', 'interface:dfs', 'interface:mysql', 'interface:pgsql', 'interface:hbase', 'interface:jdbc']
+includes: ['layer:basic', 'layer:snap', 'interface:zookeeper','interface:java', 'interface:mongodb', 'interface:dfs', 'interface:mysql', 'interface:pgsql', 'interface:hbase', 'interface:jdbc', 'interface:http']

@@ -347,3 +347,7 @@ def provide_connection(zookeeper, jdbc):
           driver="org.apache.drill.jdbc.Driver",
           extended=None
       )
+
+@when('website.available')
+def website_available(website):
+    website.configure(8047)
